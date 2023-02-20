@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+require('./models/admin');
 require('./models/user');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT;
 
+mongoose.set('strictQuery', true);
 mongoose.connect(MONGO_URI);
 const database = mongoose.connection;
 

@@ -14,3 +14,8 @@ module.exports.successRes = (res, data) => {
     data,
   });
 };
+
+module.exports.internalServerError = (res, err) => {
+  console.log(err);
+  return this.errorRes(res, 500, 'Internal server error.');
+};

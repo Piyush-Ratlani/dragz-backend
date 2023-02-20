@@ -1,21 +1,113 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
+const Admin = mongoose.model('Admin');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { errorRes, successRes } = require('../utility/utility');
+const {
+  errorRes,
+  successRes,
+  internalServerError,
+} = require('../utility/utility');
 const JWT_SECRET_USER = process.env.JWT_SECRET_USER;
+const JWT_SECRET_ADMIN = process.env.JWT_SECRET_USER;
+
+module.exports.adminSignup_post = async (req, res) => {
+  const { displayName, email, password } = req.body;
+
+  if (!displayName || !email || !password)
+    return errorRes(res, 400, 'All fields are required.');
+
+  try {
+    const savedUser = await User.findOne({ email });
+    if (savedUser)
+      return errorRes(res, 400, 'Use different email for admin account.');
+  } catch (err) {
+    console.log(err);
+  }
+
+  Admin.findOne({ email })
+    .then(savedAdmin => {
+      if (savedAdmin) return errorRes(res, 400, 'Admin already exist.');
+      else {
+        bcrypt.genSalt(10, (err, salt) => {
+          if (err)
+            return errorRes(
+              res,
+              400,
+              'Internal server error. Please try again.'
+            );
+
+          bcrypt
+            .hash(password, salt)
+            .then(hashedPass => {
+              const admin = new Admin({
+                displayName,
+                email,
+                password: hashedPass,
+              });
+              admin
+                .save()
+                .then(admin => {
+                  const { _id, displayName, email } = admin;
+                  const token = jwt.sign({ _id }, JWT_SECRET_ADMIN);
+
+                  return successRes(res, {
+                    admin: { _id, displayName, email, token },
+                    message: 'Admin added successfully.',
+                  });
+                })
+                .catch(err => internalServerError(res, err));
+            })
+            .catch(err => internalServerError(res, err));
+        });
+      }
+    })
+    .catch(err => internalServerError(res, err));
+};
+
+module.exports.adminSignin_post = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return errorRes(res, 400, 'All fields are required.');
+  Admin.findOne({ email })
+    .then(savedAdmin => {
+      if (!savedAdmin) return errorRes(res, 400, 'Invalid login credentials.');
+      bcrypt
+        .compare(password, savedAdmin.password)
+        .then(doMatch => {
+          if (!doMatch) return errorRes(res, 400, 'Invalid login credentials.');
+
+          const { _id, displayName, email } = savedAdmin;
+          const token = jwt.sign({ _id }, JWT_SECRET_ADMIN);
+          return successRes(res, {
+            admin: { _id, displayName, email, token },
+            message: 'Signin success.',
+          });
+        })
+        .catch(err => internalServerError(res, err));
+    })
+    .catch(err => internalServerError(res, err));
+};
 
 module.exports.userSignup_post = async (req, res) => {
   const { displayName, email, contactNumber, password } = req.body;
 
   if (
-    !displayName.firstName ||
-    !displayName.lastName ||
+    !displayName?.firstName ||
+    !displayName?.lastName ||
     !email ||
     !contactNumber ||
     !password
   )
     return errorRes(res, 400, 'All fields are required');
+
+  try {
+    const savedAdmin = await Admin.findOne({ email });
+    if (savedAdmin)
+      return errorRes(res, 400, 'Use different email for user account.');
+  } catch (err) {
+    internalServerError(res, err);
+  }
 
   try {
     const savedContactUser = await User.findOne({ contactNumber });
@@ -67,16 +159,12 @@ module.exports.userSignup_post = async (req, res) => {
                   return errorRes(res, 500, 'Internal server error.');
                 });
             })
-            .catch(err => {
-              console.log(err);
-              return errorRes(res, 500, 'Internal server error.');
-            });
+            .catch(err => internalServerError(res, err));
         });
       }
     }
   } catch (err) {
-    console.log(err);
-    return errorRes(res, 500, 'Internal server error.');
+    return internalServerError(res, err);
   }
 };
 
@@ -112,14 +200,8 @@ module.exports.userSignin_post = async (req, res) => {
               });
             }
           })
-          .catch(err => {
-            console.log(err);
-            return errorRes(res, 500, 'Internal server error.');
-          });
+          .catch(err => internalServerError(res, err));
       }
     })
-    .catch(err => {
-      console.log(err);
-      return errorRes(res, 500, 'Internal server error.');
-    });
+    .catch(err => internalServerError(res, err));
 };

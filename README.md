@@ -1,3 +1,3 @@
 ## description
 
-- Temporary repo
+- Home cleaning service application.
