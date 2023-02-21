@@ -3,8 +3,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('./models/admin');
 require('./models/user');
+require('./models/serviceCategory');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
+const serviceCategoryRoutes = require('./routes/serviceCategoryRoutes');
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT;
 
@@ -29,3 +31,4 @@ app.use(
 );
 
 app.use(authRoutes);
+app.use(serviceCategoryRoutes);
