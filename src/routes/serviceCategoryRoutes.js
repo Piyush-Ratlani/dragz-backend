@@ -1,17 +1,17 @@
-const express = require('express');
-const serviceCategoryController = require('../controllers/serviceCategoryController');
+const express = require("express");
+const serviceCategoryController = require("../controllers/serviceCategory.controller");
 const router = express.Router();
 
 router.post(
-  '/service-category/add',
+  "/service-category/add",
   serviceCategoryController.addServiceCategory_post
 );
 router.get(
-  '/service-category/all',
+  "/service-category/all",
   serviceCategoryController.getAllCategories_get
 );
 router.delete(
-  '/service-category/:categoryId/delete',
+  "/service-category/:categoryId/delete",
   serviceCategoryController.deleteServiceCategory_delete
 );
 
