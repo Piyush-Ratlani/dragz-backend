@@ -6,6 +6,10 @@ router.post(
   "/service-category/add",
   serviceCategoryController.addServiceCategory_post
 );
+router.post(
+  "/service-category/:categoryId/edit",
+  serviceCategoryController.editServiceCategory_post
+);
 router.get(
   "/service-category/all",
   serviceCategoryController.getAllCategories_get
